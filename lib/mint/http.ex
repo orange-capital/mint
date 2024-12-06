@@ -412,19 +412,24 @@ defmodule Mint.HTTP do
   def connect(scheme, address, port, opts \\ []) do
     case Keyword.fetch(opts, :proxy) do
       {:ok, {proxy_scheme, proxy_address, proxy_port, proxy_opts}} ->
-        case Util.scheme_to_transport(scheme) do
-          Transport.TCP ->
-            proxy = {proxy_scheme, proxy_address, proxy_port}
-            host = {scheme, address, port}
-            opts = Keyword.merge(opts, proxy_opts)
-            UnsafeProxy.connect(proxy, host, opts)
+        if proxy_scheme == :socks5 do
+          host = {scheme, address, port, opts}
+          proxy = {proxy_address, proxy_port, proxy_opts}
+          Mint.Proxy.Socks5.connect(proxy, host)
+        else
+          case Util.scheme_to_transport(scheme) do
+            Transport.TCP ->
+              proxy = {proxy_scheme, proxy_address, proxy_port}
+              host = {scheme, address, port}
+              opts = Keyword.merge(opts, proxy_opts)
+              UnsafeProxy.connect(proxy, host, opts)
 
-          Transport.SSL ->
-            proxy = {proxy_scheme, proxy_address, proxy_port, proxy_opts}
-            host = {scheme, address, port, opts}
-            TunnelProxy.connect(proxy, host)
+            Transport.SSL ->
+              proxy = {proxy_scheme, proxy_address, proxy_port, proxy_opts}
+              host = {scheme, address, port, opts}
+              TunnelProxy.connect(proxy, host)
+          end
         end
-
       :error ->
         Mint.Negotiate.connect(scheme, address, port, opts)
     end

@@ -348,7 +348,7 @@ defmodule Mint.Core.Transport.SSL do
   end
 
   @impl true
-  def upgrade(socket, :http, hostname, _port, opts) do
+  def upgrade(socket, scheme, hostname, _port, opts) when scheme in [:http, :socks5] do
     hostname = String.to_charlist(hostname)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
 
