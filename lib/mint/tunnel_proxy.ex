@@ -13,7 +13,7 @@ defmodule Mint.TunnelProxy do
     end
   end
 
-  defp establish_proxy(proxy, host) do
+  def establish_proxy(proxy, host) do
     {proxy_scheme, proxy_address, proxy_port, proxy_opts} = proxy
     {_scheme, address, port, opts} = host
     hostname = Mint.Core.Util.hostname(opts, address)
