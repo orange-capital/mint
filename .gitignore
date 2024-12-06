@@ -26,3 +26,5 @@ mint-*.tar
 
 /plts/*.plt
 /plts/*.plt.hash
+
+/.idea
