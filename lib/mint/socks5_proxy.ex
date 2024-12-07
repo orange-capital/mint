@@ -23,8 +23,8 @@ defmodule Mint.Proxy.Socks5 do
   def establish_proxy({proxy_host, proxy_port, proxy_opts}, {_scheme, host, port, _opts}) do
     base_opts = [:binary, {:active, false}, {:packet, 0}, {:keepalive,  true}, {:nodelay, true}]
     accept_keys = [:linger, :nodelay, :send_timeout, :send_timeout_close, :raw, :inet6, :ip]
-    tcp_opt = Keyword.get(proxy_opts, :tcp_opt, [])
-    connect_opts = filter_options(tcp_opt, accept_keys, base_opts)
+    tcp_opts = Keyword.get(proxy_opts, :tcp_opts, [])
+    connect_opts = filter_options(tcp_opts, accept_keys, base_opts)
     timeout = Keyword.get(proxy_opts, :connect_timeout, 20_000)
     ts_start = System.system_time(:millisecond)
     case :gen_tcp.connect(fmt_connect_host(proxy_host), proxy_port, connect_opts, timeout) do
