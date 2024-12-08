@@ -21,11 +21,13 @@ defmodule Mint.Proxy.Socks5 do
   end
 
   def establish_proxy({proxy_host, proxy_port, proxy_opts}, {_scheme, host, port, _opts}) do
-    base_opts = [:binary, {:active, false}, {:packet, 0}, {:keepalive,  true}, {:nodelay, true}]
-    accept_keys = [:linger, :nodelay, :send_timeout, :send_timeout_close, :raw, :inet6, :ip]
+    base_opts = [{:mode, :binary}, {:active, false}, {:packet, 0}, {:keepalive,  true}, {:nodelay, true}]
+    accept_keys = [:linger, :nodelay, :send_timeout, :send_timeout_close, :raw, :ip]
     transport_opts = Keyword.get(proxy_opts, :transport_opts, [])
     timeout = Keyword.get(transport_opts, :timeout, 20_000)
+    inet6? = Keyword.get(transport_opts, :inet6, false)
     connect_opts = filter_options(transport_opts, accept_keys, base_opts)
+    connect_opts = if inet6?, do: [:inet6| connect_opts], else: connect_opts
     ts_start = System.system_time(:millisecond)
     case :gen_tcp.connect(fmt_connect_host(proxy_host), proxy_port, connect_opts, timeout) do
       {:ok, socket} ->
