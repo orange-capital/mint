@@ -22,11 +22,11 @@ defmodule Mint.Proxy.Socks5 do
 
   def establish_proxy({proxy_host, proxy_port, proxy_opts}, {_scheme, host, port, _opts}) do
     base_opts = [{:mode, :binary}, {:active, false}, {:packet, 0}, {:keepalive,  true}, {:nodelay, true}]
-    accept_keys = [:linger, :nodelay, :send_timeout, :send_timeout_close, :raw, :ip]
+    accept_keys = [:mode, :active, :packet, :raw, :ip, :reuseaddr, :nodelay, :linger, :send_timeout, :send_timeout_close, :sndbuf]
     transport_opts = Keyword.get(proxy_opts, :transport_opts, [])
     timeout = Keyword.get(transport_opts, :timeout, 20_000)
     inet6? = Keyword.get(transport_opts, :inet6, false)
-    connect_opts = filter_options(transport_opts, accept_keys, base_opts)
+    connect_opts = Mint.Core.Util.filter_inet_opts(transport_opts, accept_keys, base_opts)
     connect_opts = if inet6?, do: [:inet6| connect_opts], else: connect_opts
     ts_start = System.system_time(:millisecond)
     case :gen_tcp.connect(fmt_connect_host(proxy_host), proxy_port, connect_opts, timeout) do
@@ -138,41 +138,6 @@ defmodule Mint.Proxy.Socks5 do
       is_binary(ip_or_host) -> to_charlist(ip_or_host)
       true -> ip_or_host
     end
-  end
-
-  defp filter_options(opts, accept_keys, acc) do
-    acc_map = opts_to_map(acc)
-    acc2 = Enum.reduce(opts, acc_map, fn x, acc1 ->
-      case x do
-        {:raw, v1, v2, v3} ->
-          if :raw in accept_keys, do: Map.put(acc1, :raw, {v1, v2, v3}), else: acc1
-        {k, v} ->
-          if k in accept_keys, do: Map.put(acc1, k, v), else: acc1
-        _ ->
-          if x in accept_keys, do: Map.put(acc1, x, nil), else: acc1
-      end
-    end)
-    map_to_opts(acc2)
-  end
-
-  defp opts_to_map(opts) do
-    Enum.reduce(opts, %{}, fn x, acc ->
-      case x do
-        {:raw, v1, v2, v3} -> Map.put(acc, :raw, {v1, v2, v3})
-        {k, v} -> Map.put(acc, k, v)
-        _ when is_atom(x) -> Map.put(acc, x, nil)
-      end
-    end)
-  end
-
-  defp map_to_opts(opts) do
-    Enum.reduce(opts, [], fn x, acc ->
-      case x do
-        {:raw, {v1, v2, v3}} -> [{:raw, v1, v2, v3}| acc]
-        {k, nil} -> [k| acc]
-        {k, v} -> [{k, v}| acc]
-      end
-    end)
   end
 
   def resolve_addr(host, resolve) do

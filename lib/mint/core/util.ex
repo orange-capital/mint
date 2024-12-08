@@ -68,4 +68,39 @@ defmodule Mint.Core.Util do
   @spec maybe_concat(binary(), binary()) :: binary()
   def maybe_concat(<<>>, data), do: data
   def maybe_concat(buffer, data) when is_binary(buffer), do: buffer <> data
+
+  def filter_inet_opts(opts, accept_keys, acc) do
+    acc_map = inet_opts_to_map(acc)
+    acc2 = Enum.reduce(opts, acc_map, fn x, acc1 ->
+      case x do
+        {:raw, v1, v2, v3} ->
+          if :raw in accept_keys, do: Map.put(acc1, :raw, {v1, v2, v3}), else: acc1
+        {k, v} ->
+          if k in accept_keys, do: Map.put(acc1, k, v), else: acc1
+        _ ->
+          if x in accept_keys, do: Map.put(acc1, x, nil), else: acc1
+      end
+    end)
+    map_to_inet_opts(acc2)
+  end
+
+  defp inet_opts_to_map(opts) do
+    Enum.reduce(opts, %{}, fn x, acc ->
+      case x do
+        {:raw, v1, v2, v3} -> Map.put(acc, :raw, {v1, v2, v3})
+        {k, v} -> Map.put(acc, k, v)
+        _ when is_atom(x) -> Map.put(acc, x, nil)
+      end
+    end)
+  end
+
+  defp map_to_inet_opts(opts) do
+    Enum.reduce(opts, [], fn x, acc ->
+      case x do
+        {:raw, {v1, v2, v3}} -> [{:raw, v1, v2, v3}| acc]
+        {k, nil} -> [k| acc]
+        {k, v} -> [{k, v}| acc]
+      end
+    end)
+  end
 end

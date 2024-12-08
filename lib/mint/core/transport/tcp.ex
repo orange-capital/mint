@@ -21,11 +21,8 @@ defmodule Mint.Core.Transport.TCP do
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     inet4? = Keyword.get(opts, :inet4, true)
     inet6? = Keyword.get(opts, :inet6, false)
-
-    opts =
-      opts
-      |> Keyword.merge(@transport_opts)
-      |> Keyword.drop([:alpn_advertised_protocols, :timeout, :inet4, :inet6])
+    accept_opts = [:mode, :active, :packet, :raw, :ip, :reuseaddr, :nodelay, :linger, :send_timeout, :send_timeout_close, :sndbuf]
+    opts = Mint.Core.Util.filter_inet_opts(opts, accept_opts, @transport_opts)
 
     if inet6? do
       # Try inet6 first, then fall back to the defaults provided by
