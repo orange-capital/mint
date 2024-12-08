@@ -30,7 +30,7 @@ defmodule Mint.Proxy.Socks5 do
     case :gen_tcp.connect(fmt_connect_host(proxy_host), proxy_port, connect_opts, timeout) do
       {:ok, socket} ->
         ts_end = System.system_time(:millisecond)
-        remain_timeout = max(1000, timeout - (ts_end - ts_start))
+        remain_timeout = max(100, timeout - (ts_end - ts_start))
         case do_handshake(socket, host, port, proxy_opts, remain_timeout) do
           :ok ->
             {:ok, socket}
@@ -53,7 +53,7 @@ defmodule Mint.Proxy.Socks5 do
       %{cmd: :auth_resp, method: 2} ->
         :ok = :gen_tcp.send(socket, Mint.Socks5.mk_auth_data(user, pass))
         ts_end = System.system_time(:millisecond)
-        remain_timeout = max(1000, timeout - (ts_end - ts_start))
+        remain_timeout = max(100, timeout - (ts_end - ts_start))
         case recv_msg(socket, Mint.Socks5.recv_size(:auth_status), remain_timeout, "") do
           %{cmd: :auth_status, status: 0} ->
             :ok
@@ -97,7 +97,7 @@ defmodule Mint.Proxy.Socks5 do
         case recv_msg(socket, Mint.Socks5.recv_size(:auth_resp), timeout, "") do
           %{cmd: :auth_resp, method: 0} ->
             ts_end = System.system_time(:millisecond)
-            remain_timeout = max(1000, timeout - (ts_end - ts_start))
+            remain_timeout = max(100, timeout - (ts_end - ts_start))
             do_connection(socket, host, port, proxy_opts, remain_timeout)
           %{} = other ->
             {:error, {:proxy_error, other}}
@@ -109,7 +109,7 @@ defmodule Mint.Proxy.Socks5 do
         case do_authentication(socket, user, pass, timeout) do
           :ok ->
             ts_end = System.system_time(:millisecond)
-            remain_timeout = max(1000, timeout - (ts_end - ts_start))
+            remain_timeout = max(100, timeout - (ts_end - ts_start))
             do_connection(socket, host, port, proxy_opts, remain_timeout)
           {:error, reason} ->
             {:error, reason}
