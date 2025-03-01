@@ -129,6 +129,8 @@ defmodule Mint.Proxy.Socks5 do
           msg ->
             msg
         end
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
